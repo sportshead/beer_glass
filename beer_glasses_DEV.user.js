@@ -25,23 +25,20 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         console.log('fetch intercepted');
-        /** @type {Response} */
         const response = await originalFetch(...args);
-        // check if url contains "christmas_town.php?q=miniGameAction", and if request matches {"gameType":"gameGiftShop","action":"getItems"}
         if (response.url.includes('christmas_town.php?q=miniGameAction') && args[1].body.includes('{"gameType":"gameGiftShop","action":"getItems"}')) {
             console.log('fetch gameGiftShop')
             const res = await response.clone().json();
-            // check if shopType: Beer tent
+            // check if on beer tent
             if (res.shopType === 'Beer tent' && !active) {
                 console.log('fetch beer tent');
-                // hook after 100ms loading time
+                // hook after 100ms loading time - otherwise there is nothing to hook to
                 setTimeout(() => {
                     hook(button);
                     active = true;
                 }, 100);
             }
-        } // else if active and url contains https://www.torn.com/christmas_town.php?q=move
-        else if (active && response.url.includes('christmas_town.php?q=move')) {
+        } else if (active && response.url.includes('christmas_town.php?q=move')) {
             console.log('fetch move');
             unHook();
             active = false;
@@ -57,33 +54,6 @@
             $('div.status-title > div').before(button);
             $('#buyBeerBtn').on('click', async () => {
                 $('#buyBeerResult').text('');
-                /* await getAction({
-                    type: 'post',
-                    action: 'christmas_town.php?q=miniGameAction',
-                    contentType: 'application/json; charset=UTF-8',
-                    data: JSON.stringify({
-                        gameType: 'gameGiftShop',
-                        action: 'buyItem',
-                        result: {
-                            giftShopType: 'basic',
-                            itemType: 816,
-                            itemCategory: 'tornItems'
-                        }
-                    }),
-                    success: (obj) => {
-                        if (!obj.success) {
-                            console.log('beer glasses error', obj);
-                            $('#buyBeerResult').text(obj.error).css('color', 'red');
-                        } else if (obj.userData.userStatus === "ok") {
-                            console.log('beer glasses bought');
-                            $('#buyBeerResult').text('Added to your items.').css('color', 'green');
-                        } else {
-                            console.log('beer glasses error', obj);
-                            $('#buyBeerResult').text(!!obj.userData.message.trim() ? obj.userData.message : 'Something went wrong.').css('color', 'red');
-                        }
-                    }
-                }); */
-                // post to 'christmas_town.php?q=miniGameAction' with data {gameType: 'gameGiftShop',action: 'buyItem',result: {giftShopType: 'basic',itemType: 816,itemCategory: 'tornItems'}}
                 const obj = await $.ajax({
                     type: 'post',
                     url: 'christmas_town.php?q=miniGameAction',
@@ -105,7 +75,6 @@
                     console.log('beer glasses bought');
                     $('#buyBeerResult').text('Added to your items.').css('color', 'green');
 
-                    // set new bucks count ("div.status-title > div > div > span > span") to value of "ul.items-list > il.bucks > span.quantity"
                     $('div.status-title > div > div > span > span').text($('ul.items-list > li.bucks > span.quantity').text());
                 } else {
                     console.log('beer glasses error', obj);
